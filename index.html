@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Picture Taking Package Poll</title>
     
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Inter & JetBrains Mono (for numbers) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,6 +18,7 @@
                 extend: {
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
                     },
                     colors: {
                         slate: {
@@ -26,6 +27,9 @@
                             800: '#1e293b',
                             900: '#0f172a',
                         }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             }
@@ -78,6 +82,8 @@
         const HelpCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></IconBase>;
         const AlertCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></IconBase>;
         const Clock = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>;
+        const QrCode = (props) => <IconBase {...props}><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></IconBase>;
+        const Trophy = (props) => <IconBase {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconBase>;
 
         // --- Helper: Simple CSV Parser ---
         const parseCSV = (text) => {
@@ -136,6 +142,53 @@
             );
         };
 
+        // --- Countdown Component (Moved OUTSIDE App to prevent re-renders) ---
+        const Countdown = () => {
+            const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+            useEffect(() => {
+                const targetDate = new Date('2025-12-18T00:00:00');
+
+                const calculateTime = () => {
+                    const now = new Date();
+                    const difference = targetDate - now;
+
+                    if (difference > 0) {
+                        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+                        const minutes = Math.floor((difference / 1000 / 60) % 60);
+                        const seconds = Math.floor((difference / 1000) % 60);
+                        setTimeLeft({ days, hours, minutes, seconds });
+                    } else {
+                        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+                    }
+                };
+
+                calculateTime(); // Initial call
+                const interval = setInterval(calculateTime, 1000);
+
+                return () => clearInterval(interval);
+            }, []);
+
+            const TimeBox = ({ value, label }) => (
+                <div className="flex flex-col items-center">
+                    <div className="bg-white/80 border border-amber-200 text-amber-600 font-mono text-xl sm:text-2xl font-bold rounded-lg w-12 sm:w-14 h-12 sm:h-14 flex items-center justify-center shadow-sm transition-all duration-300">
+                        {String(value).padStart(2, '0')}
+                    </div>
+                    <span className="text-[10px] uppercase font-bold text-amber-700/60 mt-1">{label}</span>
+                </div>
+            );
+
+            return (
+                <div className="flex gap-2 sm:gap-3">
+                    <TimeBox value={timeLeft.days} label="Days" />
+                    <TimeBox value={timeLeft.hours} label="Hrs" />
+                    <TimeBox value={timeLeft.minutes} label="Min" />
+                    <TimeBox value={timeLeft.seconds} label="Sec" />
+                </div>
+            );
+        };
+
         // --- Visualization Components ---
 
         const ModernBarChart = ({ data, color = "#6366f1" }) => {
@@ -149,16 +202,29 @@
                 {data.map((d, i) => {
                     const widthPercent = maxVal > 0 ? (d.value / maxVal) * 100 : 0;
                     const percentOfTotal = total > 0 ? Math.round((d.value / total) * 100) : 0;
+                    const isWinner = d.value === maxVal && maxVal > 0;
+                    
                     return (
                     <div key={i} className="flex flex-col w-full group cursor-default">
                         <div className="flex justify-between items-end mb-1.5 px-1">
-                             <span className="text-slate-600 font-medium truncate max-w-[70%]" title={d.label}>{d.label}</span>
-                             <span className="text-slate-400 text-[10px] font-medium">{d.value} votes ({percentOfTotal}%)</span>
+                             <div className="flex items-center gap-2 max-w-[70%]">
+                                <span className={`font-medium truncate ${isWinner ? 'text-amber-600 font-bold' : 'text-slate-600'}`} title={d.label}>
+                                    {d.label}
+                                </span>
+                                {isWinner && <Trophy size={12} className="text-amber-500" />}
+                             </div>
+                             <span className={`text-[10px] font-medium ${isWinner ? 'text-amber-600' : 'text-slate-400'}`}>
+                                {d.value} votes ({percentOfTotal}%)
+                             </span>
                         </div>
                         <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden relative">
                              <div 
                                 style={{ width: `${widthPercent}%` }} 
-                                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 shadow-sm group-hover:from-indigo-400 group-hover:to-purple-400 transition-all duration-700 ease-out"
+                                className={`h-full rounded-full shadow-sm transition-all duration-700 ease-out
+                                    ${isWinner 
+                                        ? 'bg-gradient-to-r from-amber-400 to-orange-500 shadow-amber-500/30' 
+                                        : 'bg-gradient-to-r from-indigo-500 to-purple-500 group-hover:from-indigo-400 group-hover:to-purple-400'}
+                                `}
                             ></div>
                         </div>
                     </div>
@@ -248,6 +314,7 @@
             const [error, setError] = useState(null);
             const [autoRefresh, setAutoRefresh] = useState(true);
             const [activeTab, setActiveTab] = useState('dashboard');
+            const [showQr, setShowQr] = useState(false);
 
             // --- Mock Data Generator for Demo ---
             const loadDemoData = () => {
@@ -273,7 +340,7 @@
             };
 
             // --- Data Fetching ---
-            const fetchData = async () => {
+            const fetchData = async (isBackground = false) => {
                 if (!sheetUrl) return;
                 if (sheetUrl === "DEMO_MODE") {
                 if (Math.random() > 0.7) {
@@ -291,8 +358,11 @@
                 return;
                 }
 
-                setLoading(true);
-                setError(null);
+                // Only show loading state on initial fetch or manual connect
+                if (!isBackground) {
+                    setLoading(true);
+                    setError(null);
+                }
                 
                 const targetUrl = transformSheetUrl(sheetUrl);
 
@@ -320,19 +390,22 @@
                 const dataRows = parsed.slice(1).reverse();
                 setRawData(dataRows);
                 setLastUpdated(new Date());
-                setConfigMode(false);
+                if (!isBackground) setConfigMode(false);
                 } catch (err) {
                 console.error(err);
-                setError(err.message || "Connection failed. Please ensure the sheet is visible to 'Anyone with the link'.");
+                if (!isBackground) setError(err.message || "Connection failed. Please ensure the sheet is visible to 'Anyone with the link'.");
                 } finally {
-                setLoading(false);
+                if (!isBackground) setLoading(false);
                 }
             };
 
-            useEffect(() => { if (sheetUrl) fetchData(); }, []);
+            // Initial load
+            useEffect(() => { if (sheetUrl) fetchData(false); }, []);
+
+            // Polling interval - pass true for background update
             useEffect(() => {
                 let interval;
-                if (autoRefresh && !configMode && sheetUrl) interval = setInterval(fetchData, 5000); 
+                if (autoRefresh && !configMode && sheetUrl) interval = setInterval(() => fetchData(true), 5000); 
                 return () => clearInterval(interval);
             }, [autoRefresh, configMode, sheetUrl]);
 
@@ -413,7 +486,7 @@
 
                     <div className="flex gap-4 pt-2">
                         <button 
-                        onClick={fetchData} 
+                        onClick={() => fetchData(false)}
                         disabled={!sheetUrl}
                         className={`flex-1 py-3.5 px-6 rounded-xl font-bold text-white shadow-lg transition-all transform hover:-translate-y-0.5
                             ${sheetUrl ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-indigo-500/25' : 'bg-slate-300 cursor-not-allowed'}
@@ -437,24 +510,53 @@
                 <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
                 
                 {/* Poll Closing Notice & Vote Link */}
-                <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm ring-1 ring-amber-900/5">
-                     <div className="flex items-center gap-4">
-                        <div className="p-2.5 bg-amber-100 rounded-xl text-amber-600 shrink-0">
-                            <Clock size={20} />
+                <div className="relative bg-amber-50 border border-amber-100 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm ring-1 ring-amber-900/5 overflow-hidden">
+                     {/* Dynamic Countdown */}
+                     <div className="flex items-center gap-4 z-10 w-full md:w-auto justify-center md:justify-start">
+                        <div className="p-3 bg-amber-100/50 rounded-xl text-amber-600 shrink-0 hidden sm:block">
+                            <Clock size={24} />
                         </div>
-                        <div>
-                            <p className="font-bold text-amber-900 text-sm">Poll Closing Soon</p>
-                            <p className="text-amber-800 text-sm">The poll will officially close on <span className="font-bold">December 17, 2025 at 12 Midnight</span>.</p>
+                        <div className="flex flex-col items-center md:items-start gap-2">
+                            <p className="text-amber-900 font-bold text-sm tracking-wide uppercase">Time Remaining</p>
+                            <Countdown />
                         </div>
                      </div>
-                     <a 
-                        href="https://forms.gle/gwCFgAHyhBpChaKr9" 
-                        target="_blank"
-                        rel="noopener noreferrer" 
-                        className="px-8 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold rounded-xl transition-all shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/50 transform hover:-translate-y-1 hover:scale-105 text-base whitespace-nowrap ring-4 ring-orange-500/20"
-                     >
-                        VOTE HERE NOW &rarr;
-                     </a>
+                     
+                     <div className="flex gap-3 z-10 w-full md:w-auto justify-center">
+                        <button
+                            onClick={() => setShowQr(!showQr)}
+                            className="p-3.5 bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 rounded-xl transition-all shadow-sm hover:shadow-md"
+                            title="Show QR Code"
+                        >
+                            <QrCode size={24} />
+                        </button>
+                        <a 
+                            href="https://forms.gle/gwCFgAHyhBpChaKr9" 
+                            target="_blank"
+                            rel="noopener noreferrer" 
+                            className="px-8 py-3.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold rounded-xl transition-all shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/50 transform hover:-translate-y-1 hover:scale-105 text-base whitespace-nowrap ring-4 ring-orange-500/20 flex items-center gap-2"
+                        >
+                            VOTE NOW &rarr;
+                        </a>
+                     </div>
+
+                     {/* Background Pattern */}
+                     <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-orange-100/50 to-transparent pointer-events-none"></div>
+
+                     {/* QR Code Popover */}
+                     {showQr && (
+                        <div className="absolute top-full right-4 mt-3 p-4 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center gap-3">
+                            <div className="text-center">
+                                <p className="font-bold text-slate-800 text-sm">Scan to Vote</p>
+                                <p className="text-xs text-slate-500">Open Camera App</p>
+                            </div>
+                            <img 
+                                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://forms.gle/gwCFgAHyhBpChaKr9" 
+                                alt="Voting QR Code" 
+                                className="w-40 h-40 rounded-lg"
+                            />
+                        </div>
+                     )}
                 </div>
 
                 {/* Stats Row */}
