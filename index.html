@@ -3,731 +3,873 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Picture Taking Package Poll</title>
-    
-    <!-- Google Fonts: Inter & JetBrains Mono (for numbers) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-
-    <!-- Tailwind CSS -->
+    <title>Data Entering</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        slate: {
-                            50: '#f8fafc',
-                            100: '#f1f5f9',
-                            800: '#1e293b',
-                            900: '#0f172a',
-                        }
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
         
-        .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        /* Custom scrollbar for code blocks */
+        pre::-webkit-scrollbar {
+            height: 8px;
         }
-        
-        .gradient-bg {
-            background: radial-gradient(circle at 0% 0%, #eef2ff 0%, transparent 50%), 
-                        radial-gradient(circle at 100% 100%, #f0fdf4 0%, transparent 50%);
+        pre::-webkit-scrollbar-track {
+            background: #1f2937; 
+            border-radius: 4px;
+        }
+        pre::-webkit-scrollbar-thumb {
+            background: #4b5563; 
+            border-radius: 4px;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 gradient-bg min-h-screen relative">
-    <div id="root"></div>
+<body class="bg-slate-900 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black text-slate-100 min-h-screen flex flex-col items-center py-10 px-4">
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+    <!-- Admin Toggle Button (Updated with fixed positioning and higher z-index) -->
+    <button id="toggleAdminBtn" class="fixed top-4 right-4 bg-slate-800 hover:bg-slate-700 text-amber-400 px-4 py-2 rounded-lg text-sm font-semibold border border-slate-700 shadow-lg flex items-center gap-2 transition-all z-[100]">
+        <i data-lucide="shield" class="w-4 h-4"></i> Admin Panel
+    </button>
 
-        // --- Icons ---
-        const IconBase = ({ size = 24, className = "", children }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
-        );
-        const Activity = (props) => <IconBase {...props}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></IconBase>;
-        const RefreshCw = ({ className, ...props }) => <IconBase className={className} {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconBase>;
-        const Settings = (props) => <IconBase {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>;
-        const HelpCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></IconBase>;
-        const AlertCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></IconBase>;
-        const Clock = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>;
-        const QrCode = (props) => <IconBase {...props}><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></IconBase>;
-        const Trophy = (props) => <IconBase {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconBase>;
-
-        // --- Helper: Simple CSV Parser ---
-        const parseCSV = (text) => {
-            const rows = [];
-            let currentRow = [];
-            let currentField = '';
-            let inQuotes = false;
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                const nextChar = text[i + 1];
-                if (char === '"') {
-                    if (inQuotes && nextChar === '"') { currentField += '"'; i++; } else { inQuotes = !inQuotes; }
-                } else if (char === ',' && !inQuotes) {
-                    currentRow.push(currentField.trim()); currentField = '';
-                } else if ((char === '\n' || char === '\r') && !inQuotes) {
-                    if (currentField || currentRow.length > 0) { currentRow.push(currentField.trim()); rows.push(currentRow); currentRow = []; currentField = ''; }
-                    if (char === '\r' && nextChar === '\n') i++;
-                } else { currentField += char; }
-            }
-            if (currentField || currentRow.length > 0) { currentRow.push(currentField.trim()); rows.push(currentRow); }
-            return rows;
-        };
-
-        // --- Helper: URL Transformer ---
-        const transformSheetUrl = (url) => {
-            if (!url) return '';
-            if (url.includes('output=csv') || url.includes('format=csv')) return url;
-            const idMatch = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-            const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
-            if (idMatch) {
-                const id = idMatch[1];
-                const gid = gidMatch ? gidMatch[1] : '0'; 
-                return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
-            }
-            return url;
-        };
-
-        // --- Custom UI Components ---
-
-        const Card = ({ children, className = "" }) => (
-            <div className={`bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 ${className}`}>
-                {children}
+    <div id="studentFormView" class="w-full max-w-md mt-8 transition-all">
+        <!-- Main Form Card -->
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 border-t-4 border-t-amber-500 overflow-hidden mb-6 relative">
+            
+            <div class="bg-slate-50 px-6 py-10 text-center relative overflow-hidden border-b border-slate-100">
+                <!-- Decorative background elements -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-amber-400/20 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl"></div>
+                
+                <div class="relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-900 text-amber-400 mb-4 shadow-xl ring-4 ring-amber-500/20">
+                    <i data-lucide="graduation-cap" class="w-10 h-10"></i>
+                </div>
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight font-serif">Data Entering</h2>
+                <p class="text-slate-500 mt-2 text-xs font-bold uppercase tracking-widest">Graduate Details Form</p>
             </div>
-        );
 
-        const Badge = ({ children, color = "indigo" }) => {
-            const colors = {
-                blue: "bg-blue-50 text-blue-700 ring-1 ring-blue-600/10",
-                indigo: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/10",
-                green: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10",
-            };
-            return (
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide ${colors[color] || colors.indigo}`}>
-                {children}
-                </span>
-            );
-        };
-
-        // --- Countdown Component (Moved OUTSIDE App to prevent re-renders) ---
-        const Countdown = () => {
-            const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-            useEffect(() => {
-                const targetDate = new Date('2025-12-18T00:00:00');
-
-                const calculateTime = () => {
-                    const now = new Date();
-                    const difference = targetDate - now;
-
-                    if (difference > 0) {
-                        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-                        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-                        const minutes = Math.floor((difference / 1000 / 60) % 60);
-                        const seconds = Math.floor((difference / 1000) % 60);
-                        setTimeLeft({ days, hours, minutes, seconds });
-                    } else {
-                        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-                    }
-                };
-
-                calculateTime(); // Initial call
-                const interval = setInterval(calculateTime, 1000);
-
-                return () => clearInterval(interval);
-            }, []);
-
-            const TimeBox = ({ value, label }) => (
-                <div className="flex flex-col items-center">
-                    <div className="bg-white/80 border border-amber-200 text-amber-600 font-mono text-xl sm:text-2xl font-bold rounded-lg w-12 sm:w-14 h-12 sm:h-14 flex items-center justify-center shadow-sm transition-all duration-300">
-                        {String(value).padStart(2, '0')}
-                    </div>
-                    <span className="text-[10px] uppercase font-bold text-amber-700/60 mt-1">{label}</span>
+            <form id="dataForm" class="p-8 space-y-5">
+                <!-- System Messages -->
+                <div id="alertMessage" class="hidden rounded-lg p-4 text-sm font-medium flex items-start gap-3 transition-all">
+                    <i id="alertIcon" data-lucide="info" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                    <span id="alertText"></span>
                 </div>
-            );
 
-            return (
-                <div className="flex gap-2 sm:gap-3">
-                    <TimeBox value={timeLeft.days} label="Days" />
-                    <TimeBox value={timeLeft.hours} label="Hrs" />
-                    <TimeBox value={timeLeft.minutes} label="Min" />
-                    <TimeBox value={timeLeft.seconds} label="Sec" />
+                <div>
+                    <label for="section" class="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-xs">Course / Section</label>
+                    <select id="section" name="section" required class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-slate-800 bg-slate-50 focus:bg-white">
+                        <option value="" disabled selected>Select your section</option>
+                        <option value="ABM 1">ABM 1</option>
+                        <option value="ABM 2">ABM 2</option>
+                        <option value="ALS">ALS</option>
+                        <option value="ARTS & DESIGN">ARTS & DESIGN</option>
+                        <option value="HUMSS 1">HUMSS 1</option>
+                        <option value="HUMSS 2">HUMSS 2</option>
+                        <option value="HUMSS 3">HUMSS 3</option>
+                        <option value="HUMSS 4">HUMSS 4</option>
+                        <option value="HUMSS 5">HUMSS 5</option>
+                        <option value="SPORT TRACK">SPORT TRACK</option>
+                        <option value="STEM 1">STEM 1</option>
+                        <option value="STEM 2">STEM 2</option>
+                        <option value="STEM 3">STEM 3</option>
+                        <option value="TVL - ICT">TVL - ICT</option>
+                        <option value="TVL BREAD & PASTRY">TVL BREAD & PASTRY</option>
+                        <option value="TVL EIM">TVL EIM</option>
+                        <option value="TVL FOOD PRO">TVL FOOD PRO</option>
+                    </select>
                 </div>
-            );
-        };
-
-        // --- Visualization Components ---
-
-        const ModernBarChart = ({ data, color = "#6366f1" }) => {
-            if (!data || data.length === 0) return <div className="h-40 flex items-center justify-center text-slate-400">No Data</div>;
-            const maxVal = Math.max(...data.map(d => d.value));
-            const total = data.reduce((acc, curr) => acc + curr.value, 0);
-
-            // Added max-h-80 and overflow-y-auto to handle many sections (like 17) smoothly
-            return (
-                <div className="w-full flex flex-col justify-start gap-4 font-sans text-xs py-2 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                {data.map((d, i) => {
-                    const widthPercent = maxVal > 0 ? (d.value / maxVal) * 100 : 0;
-                    const percentOfTotal = total > 0 ? Math.round((d.value / total) * 100) : 0;
-                    const isWinner = d.value === maxVal && maxVal > 0;
-                    
-                    return (
-                    <div key={i} className="flex flex-col w-full group cursor-default">
-                        <div className="flex justify-between items-end mb-1.5 px-1">
-                             <div className="flex items-center gap-2 max-w-[70%]">
-                                <span className={`font-medium truncate ${isWinner ? 'text-amber-600 font-bold' : 'text-slate-600'}`} title={d.label}>
-                                    {d.label}
-                                </span>
-                                {isWinner && <Trophy size={12} className="text-amber-500" />}
-                             </div>
-                             <span className={`text-[10px] font-medium ${isWinner ? 'text-amber-600' : 'text-slate-400'}`}>
-                                {d.value} votes ({percentOfTotal}%)
-                             </span>
-                        </div>
-                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden relative">
-                             <div 
-                                style={{ width: `${widthPercent}%` }} 
-                                className={`h-full rounded-full shadow-sm transition-all duration-700 ease-out
-                                    ${isWinner 
-                                        ? 'bg-gradient-to-r from-amber-400 to-orange-500 shadow-amber-500/30' 
-                                        : 'bg-gradient-to-r from-indigo-500 to-purple-500 group-hover:from-indigo-400 group-hover:to-purple-400'}
-                                `}
-                            ></div>
-                        </div>
-                    </div>
-                    );
-                })}
-                </div>
-            );
-        };
-
-        const ModernDonutChart = ({ data }) => {
-            if (!data || data.length === 0) return <div className="h-40 flex items-center justify-center text-slate-400">No Data</div>;
-
-            const total = data.reduce((acc, cur) => acc + cur.value, 0);
-            let accumulatedAngle = 0;
-            // Modern palette
-            const colors = ["#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#10b981", "#3b82f6"];
-
-            const radius = 50;
-            const cx = 60;
-            const cy = 60;
-            const holeRadius = 35; // Size of donut hole
-
-            return (
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
-                    <div className="relative w-[120px] h-[120px]">
-                        <svg width="120" height="120" viewBox="0 0 120 120" className="transform -rotate-90">
-                            {data.map((d, i) => {
-                            const angle = (d.value / total) * 360;
-                            const largeArc = angle > 180 ? 1 : 0;
-                            const x1 = cx + radius * Math.cos((Math.PI * accumulatedAngle) / 180);
-                            const y1 = cy + radius * Math.sin((Math.PI * accumulatedAngle) / 180);
-                            accumulatedAngle += angle;
-                            const x2 = cx + radius * Math.cos((Math.PI * accumulatedAngle) / 180);
-                            const y2 = cy + radius * Math.sin((Math.PI * accumulatedAngle) / 180);
-
-                            if (data.length === 1) {
-                                return <circle key={i} cx={cx} cy={cy} r={radius} fill={colors[i % colors.length]} />;
-                            }
-
-                            const dPath = `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-                            
-                            return (
-                                <path
-                                key={i}
-                                d={dPath}
-                                fill={colors[i % colors.length]}
-                                stroke="white"
-                                strokeWidth="2"
-                                className="hover:opacity-80 transition-opacity cursor-pointer"
-                                />
-                            );
-                            })}
-                            {/* Donut Hole */}
-                            <circle cx={cx} cy={cy} r={holeRadius} fill="white" />
-                        </svg>
-                        {/* Center Text */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                             <span className="text-2xl font-bold text-slate-800 leading-none">{total}</span>
-                             <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Votes</span>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 text-xs">
-                        {data.map((d, i) => (
-                        <div key={i} className="flex items-center gap-2 group">
-                            <span className="w-2.5 h-2.5 rounded-full ring-2 ring-white shadow-sm" style={{ backgroundColor: colors[i % colors.length] }}></span>
-                            <div className="flex flex-col">
-                                <span className="text-slate-700 font-medium group-hover:text-indigo-600 transition-colors truncate max-w-[140px]" title={d.label}>{d.label}</span>
-                                <span className="text-slate-400 text-[10px]">{Math.round((d.value/total)*100)}%</span>
-                            </div>
-                        </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        // --- Main Application ---
-
-        const App = () => {
-            const [configMode, setConfigMode] = useState(true);
-            const [sheetUrl, setSheetUrl] = useState('https://docs.google.com/spreadsheets/d/1CAZHAjzs9FzpbRY2Lg4rg6xy2V-Tl1IQR4qg5rLzFNE/export?format=csv&gid=2079606152');
-            const [rawData, setRawData] = useState([]);
-            const [headers, setHeaders] = useState([]);
-            const [loading, setLoading] = useState(false);
-            const [lastUpdated, setLastUpdated] = useState(null);
-            const [error, setError] = useState(null);
-            const [autoRefresh, setAutoRefresh] = useState(true);
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [showQr, setShowQr] = useState(false);
-
-            // --- Mock Data Generator for Demo ---
-            const loadDemoData = () => {
-                setLoading(true);
-                setTimeout(() => {
-                const demoHeaders = ["Timestamp", "Email Address", "Satisfaction", "Department", "Comments"];
-                const demoRows = [
-                    ["12/12/2023 10:00:00", "alice@example.com", "5", "Sales", "Great experience!"],
-                    ["12/12/2023 10:05:00", "bob@example.com", "4", "Engineering", "Good, but slow wifi."],
-                    ["12/12/2023 10:15:00", "charlie@example.com", "2", "HR", "Not happy with the lunch options."],
-                    ["12/12/2023 11:00:00", "diana@example.com", "5", "Sales", "Amazing!"],
-                    ["12/12/2023 11:20:00", "eve@example.com", "3", "Engineering", "It's okay."],
-                    ["12/12/2023 12:00:00", "frank@example.com", "5", "Sales", "Love it."],
-                    ["12/12/2023 12:30:00", "grace@example.com", "1", "Marketing", "Terrible."],
-                ];
-                setHeaders(demoHeaders);
-                setRawData(demoRows);
-                setLastUpdated(new Date());
-                setLoading(false);
-                setConfigMode(false);
-                setSheetUrl("DEMO_MODE");
-                }, 800);
-            };
-
-            // --- Data Fetching ---
-            const fetchData = async (isBackground = false) => {
-                if (!sheetUrl) return;
-                if (sheetUrl === "DEMO_MODE") {
-                if (Math.random() > 0.7) {
-                    const depts = ["Sales", "Engineering", "Marketing", "HR"];
-                    const newRow = [
-                        new Date().toLocaleString(),
-                        `user${Math.floor(Math.random()*1000)}@example.com`,
-                        Math.floor(Math.random() * 5 + 1).toString(),
-                        depts[Math.floor(Math.random() * depts.length)],
-                        "New live response!"
-                    ];
-                    setRawData(prev => [newRow, ...prev]); 
-                    setLastUpdated(new Date());
-                }
-                return;
-                }
-
-                // Only show loading state on initial fetch or manual connect
-                if (!isBackground) {
-                    setLoading(true);
-                    setError(null);
-                }
                 
-                const targetUrl = transformSheetUrl(sheetUrl);
+                <div>
+                    <label for="lastName" class="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-xs">Last Name</label>
+                    <input type="text" id="lastName" name="lastName" required placeholder="e.g., Doe"
+                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-slate-800 bg-slate-50 focus:bg-white">
+                </div>
 
-                try {
-                let text = '';
-                try {
-                    const response = await fetch(targetUrl);
-                    if (!response.ok) throw new Error("Direct fetch failed");
-                    text = await response.text();
-                } catch (directErr) {
-                    console.warn("Direct fetch failed, attempting proxy...", directErr);
-                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error("Failed to fetch data.");
-                    text = await response.text();
-                }
-                if (text.trim().startsWith('<!DOCTYPE html') || text.trim().startsWith('<html')) {
-                    throw new Error("Received HTML instead of CSV. Please check sheet permissions (Must be 'Anyone with link' or 'Published').");
-                }
+                <div>
+                    <label for="firstName" class="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-xs">First Name</label>
+                    <input type="text" id="firstName" name="firstName" required placeholder="e.g., John"
+                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-slate-800 bg-slate-50 focus:bg-white">
+                </div>
 
-                const parsed = parseCSV(text);
-                if (parsed.length < 1) throw new Error("CSV is empty");
+                <div>
+                    <label for="middleName" class="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-xs">Middle Name</label>
+                    <input type="text" id="middleName" name="middleName" placeholder="e.g., Smith (Optional)"
+                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-slate-800 bg-slate-50 focus:bg-white">
+                </div>
 
-                setHeaders(parsed[0]);
-                const dataRows = parsed.slice(1).reverse();
-                setRawData(dataRows);
-                setLastUpdated(new Date());
-                if (!isBackground) setConfigMode(false);
-                } catch (err) {
-                console.error(err);
-                if (!isBackground) setError(err.message || "Connection failed. Please ensure the sheet is visible to 'Anyone with the link'.");
-                } finally {
-                if (!isBackground) setLoading(false);
-                }
-            };
+                <div>
+                    <label for="hardcopy" class="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-xs">Hardcopy Picture (₱100)</label>
+                    <select id="hardcopy" name="hardcopy" required class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-slate-800 bg-slate-50 focus:bg-white">
+                        <option value="" disabled selected>Do you want a hardcopy?</option>
+                        <option value="Yes">Yes, please (+₱100)</option>
+                        <option value="No">No, thank you</option>
+                    </select>
+                </div>
 
-            // Initial load
-            useEffect(() => { if (sheetUrl) fetchData(false); }, []);
+                <button type="submit" id="submitBtn"
+                    class="w-full bg-slate-900 hover:bg-black text-amber-400 font-bold py-3.5 px-4 rounded-lg shadow-xl hover:shadow-2xl transition-all flex justify-center items-center gap-2 mt-6 disabled:opacity-70 disabled:cursor-not-allowed border border-slate-800">
+                    <span id="btnText">Confirm Details</span>
+                    <i id="btnIcon" data-lucide="award" class="w-5 h-5"></i>
+                    <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-amber-400 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
 
-            // Polling interval - pass true for background update
-            useEffect(() => {
-                let interval;
-                if (autoRefresh && !configMode && sheetUrl) interval = setInterval(() => fetchData(true), 5000); 
-                return () => clearInterval(interval);
-            }, [autoRefresh, configMode, sheetUrl]);
-
-
-            // --- Data Analysis ---
-            const stats = useMemo(() => {
-                if (!rawData.length) return { total: 0, lastResponse: 'N/A', columns: [] };
-
-                const columnAnalysis = headers.map((header, index) => {
-                const values = rawData.map(row => row[index]).filter(v => v);
-                const uniqueValues = [...new Set(values)];
-                
-                let type = 'text';
-                // Increased categorical limit to 20 to allow for sections/grades
-                if (uniqueValues.length <= 20 && values.length > 0) type = 'categorical';
-                if (header.toLowerCase().includes('timestamp') || header.toLowerCase().includes('date')) type = 'datetime';
-                
-                let counts = [];
-                if (type === 'categorical') {
-                    const map = values.reduce((acc, val) => {
-                    acc[val] = (acc[val] || 0) + 1;
-                    return acc;
-                    }, {});
-                    counts = Object.entries(map)
-                    .map(([label, value]) => ({ label, value }))
-                    .sort((a, b) => b.value - a.value); 
-                }
-                return { header, index, type, counts, uniqueCount: uniqueValues.length };
-                });
-                return {
-                total: rawData.length,
-                lastResponse: rawData[0] ? rawData[0][0] : 'N/A', 
-                columns: columnAnalysis
-                };
-            }, [rawData, headers]);
-
-            // --- Views ---
-
-            const ConfigView = () => (
-                <div className="max-w-2xl mx-auto pt-16 px-4 animate-in fade-in duration-700">
-                <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8 border border-white/50 ring-1 ring-slate-900/5">
-                    <div className="flex items-center gap-4 mb-8">
-                    <div className="p-3.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30 text-white">
-                        <Activity size={32} />
+    <!-- ADMIN DASHBOARD VIEW (Hidden by default) -->
+    <div id="adminDashboardView" class="hidden w-full max-w-5xl mt-8 animate-fade-in relative z-10">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden mb-6">
+            <div class="bg-slate-900 px-6 py-6 border-b border-slate-700 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-amber-400 border border-slate-700">
+                        <i data-lucide="database" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Setup Dashboard</h1>
-                        <p className="text-slate-500 text-sm font-medium">Connect your Google Form data</p>
-                    </div>
-                    </div>
-                    
-                    <div className="space-y-6">
-                    <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100/50">
-                        <h3 className="font-semibold text-indigo-900 mb-2 flex items-center gap-2">
-                        <HelpCircle size={18} /> Quick Tips
-                        </h3>
-                        <p className="text-sm text-indigo-700/80 leading-relaxed">
-                        If connection fails, verify your Google Sheet is set to <strong>"Anyone with the link"</strong>.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2 ml-1">Google Sheet Link</label>
-                        <input 
-                        type="text" 
-                        placeholder="Paste URL..."
-                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none transition-all text-sm font-medium text-slate-700 shadow-inner"
-                        value={sheetUrl}
-                        onChange={(e) => setSheetUrl(e.target.value)}
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm flex items-center gap-3 border border-red-100">
-                        <AlertCircle size={20} /> <span className="font-medium">{error}</span>
-                        </div>
-                    )}
-
-                    <div className="flex gap-4 pt-2">
-                        <button 
-                        onClick={() => fetchData(false)}
-                        disabled={!sheetUrl}
-                        className={`flex-1 py-3.5 px-6 rounded-xl font-bold text-white shadow-lg transition-all transform hover:-translate-y-0.5
-                            ${sheetUrl ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-indigo-500/25' : 'bg-slate-300 cursor-not-allowed'}
-                        `}
-                        >
-                        {loading ? 'Connecting...' : 'Connect Now'}
-                        </button>
-                        <button 
-                        onClick={loadDemoData}
-                        className="px-8 py-3.5 rounded-xl font-bold text-indigo-600 bg-white border border-slate-200 hover:bg-slate-50 hover:border-indigo-200 transition-all shadow-sm"
-                        >
-                        Demo
-                        </button>
-                    </div>
+                        <h2 class="text-xl font-bold text-slate-100">Graduate Records</h2>
+                        <p class="text-slate-400 text-xs">Manage submissions, control numbers, and photos</p>
                     </div>
                 </div>
-                </div>
-            );
+                <button id="refreshDataBtn" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                </button>
+            </div>
 
-            const DashboardView = () => (
-                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+            <!-- Dashboard Stats & Controls -->
+            <div class="p-6 border-b border-slate-700 bg-slate-800/50 flex flex-col md:flex-row gap-4 justify-between items-center">
+                <div class="flex gap-4 w-full md:w-auto">
+                    <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 shadow-inner min-w-[100px]">
+                        <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Total</span>
+                        <div id="statTotal" class="text-xl font-bold text-slate-100">0</div>
+                    </div>
+                    <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 shadow-inner min-w-[100px]">
+                        <span class="text-amber-500/80 text-[10px] uppercase font-bold tracking-wider">Pending</span>
+                        <div id="statPending" class="text-xl font-bold text-amber-400">0</div>
+                    </div>
+                    <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 shadow-inner min-w-[100px]">
+                        <span class="text-emerald-500/80 text-[10px] uppercase font-bold tracking-wider">Completed</span>
+                        <div id="statCompleted" class="text-xl font-bold text-emerald-400">0</div>
+                    </div>
+                </div>
                 
-                {/* Poll Closing Notice & Vote Link */}
-                <div className="relative bg-amber-50 border border-amber-100 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm ring-1 ring-amber-900/5 overflow-hidden">
-                     {/* Dynamic Countdown */}
-                     <div className="flex items-center gap-4 z-10 w-full md:w-auto justify-center md:justify-start">
-                        <div className="p-3 bg-amber-100/50 rounded-xl text-amber-600 shrink-0 hidden sm:block">
-                            <Clock size={24} />
-                        </div>
-                        <div className="flex flex-col items-center md:items-start gap-2">
-                            <p className="text-amber-900 font-bold text-sm tracking-wide uppercase">Time Remaining</p>
-                            <Countdown />
-                        </div>
-                     </div>
-                     
-                     <div className="flex gap-3 z-10 w-full md:w-auto justify-center">
-                        <button
-                            onClick={() => setShowQr(!showQr)}
-                            className="p-3.5 bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 rounded-xl transition-all shadow-sm hover:shadow-md"
-                            title="Show QR Code"
-                        >
-                            <QrCode size={24} />
-                        </button>
-                        <a 
-                            href="https://forms.gle/gwCFgAHyhBpChaKr9" 
-                            target="_blank"
-                            rel="noopener noreferrer" 
-                            className="px-8 py-3.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold rounded-xl transition-all shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/50 transform hover:-translate-y-1 hover:scale-105 text-base whitespace-nowrap ring-4 ring-orange-500/20 flex items-center gap-2"
-                        >
-                            VOTE NOW &rarr;
-                        </a>
-                     </div>
-
-                     {/* Background Pattern */}
-                     <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-orange-100/50 to-transparent pointer-events-none"></div>
-
-                     {/* QR Code Popover */}
-                     {showQr && (
-                        <div className="absolute top-full right-4 mt-3 p-4 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center gap-3">
-                            <div className="text-center">
-                                <p className="font-bold text-slate-800 text-sm">Scan to Vote</p>
-                                <p className="text-xs text-slate-500">Open Camera App</p>
-                            </div>
-                            <img 
-                                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://forms.gle/gwCFgAHyhBpChaKr9" 
-                                alt="Voting QR Code" 
-                                className="w-40 h-40 rounded-lg"
-                            />
-                        </div>
-                     )}
+                <div class="relative w-full md:w-72">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                    <input type="text" id="searchInput" placeholder="Search by name, section..." class="w-full bg-slate-900 border border-slate-700 text-slate-200 px-4 py-2.5 pl-9 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors text-sm shadow-inner placeholder-slate-500">
                 </div>
+            </div>
 
-                {/* Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="p-6 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Activity size={80} className="text-indigo-600" />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><Activity size={18}/></span>
-                                <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider">Responses</p>
-                            </div>
-                            <p className="text-4xl font-bold text-slate-800 tracking-tight">{stats.total}</p>
-                        </div>
-                    </Card>
-                    
-                    <Card className="p-6 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Clock size={80} className="text-emerald-600" />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><Clock size={18}/></span>
-                                <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider">Latest</p>
-                            </div>
-                            <p className="text-lg font-bold text-slate-800 mt-2 truncate">{stats.lastResponse}</p>
-                        </div>
-                    </Card>
-
-                    <Card className="p-6 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <RefreshCw size={80} className="text-blue-600" />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className="p-2 bg-blue-100 text-blue-600 rounded-lg"><RefreshCw size={18} className={loading ? "animate-spin" : ""}/></span>
-                                <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider">Status</p>
-                            </div>
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className="relative flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                                </span>
-                                <p className="text-lg font-bold text-emerald-600">Active Live</p>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-
-                {/* Charts Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {stats.columns
-                    .filter(col => col.type === 'categorical' && col.uniqueCount > 1)
-                    .map((col) => (
-                        <Card key={col.index} className="p-8 flex flex-col h-full">
-                        <div className="flex justify-between items-start mb-6">
-                            <h3 className="text-lg font-bold text-slate-800 leading-snug pr-4" title={col.header}>{col.header}</h3>
-                            <Badge color="indigo">Poll</Badge>
-                        </div>
-                        
-                        <div className="flex-1 min-h-[240px] flex items-center justify-center">
-                            {/* Force Bar Chart for the specific package question, otherwise use heuristic */}
-                            {col.header.includes("Which picture taking package do you prefer?") || col.uniqueCount > 5 ? (
-                                <ModernBarChart data={col.counts} />
-                            ) : (
-                                <ModernDonutChart data={col.counts} />
-                            )}
-                        </div>
-                        </Card>
-                    ))}
-                    {stats.columns.filter(col => col.type === 'categorical' && col.uniqueCount > 1).length === 0 && (
-                    <div className="col-span-full p-12 text-center text-slate-400 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">
-                        <p className="font-medium">No categorical data found to graph automatically.</p>
-                    </div>
-                    )}
-                </div>
-                </div>
-            );
-
-            const FeedView = () => (
-                <Card className="overflow-hidden animate-in slide-in-from-bottom-4 duration-700 border-0 shadow-lg">
-                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <h3 className="font-bold text-slate-800 text-lg">Live Feed</h3>
-                    <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-semibold text-slate-500">Last {Math.min(rawData.length, 50)}</span>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-slate-600">
-                    <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 font-bold tracking-wider">
-                        <tr>
-                        {headers.map((h, i) => (
-                            <th key={i} className="px-6 py-4 whitespace-nowrap">{h}</th>
-                        ))}
+            <div class="p-6 overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700 select-none">
+                            <th class="pb-3 px-4 font-semibold cursor-pointer hover:text-amber-400 transition-colors group" onclick="toggleSort('rowIndex')">
+                                <div class="flex items-center gap-1">Row <i id="icon-sort-rowIndex" data-lucide="arrow-up-down" class="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity"></i></div>
+                            </th>
+                            <th class="pb-3 px-4 font-semibold cursor-pointer hover:text-amber-400 transition-colors group" onclick="toggleSort('lastName')">
+                                <div class="flex items-center gap-1">Student Name <i id="icon-sort-lastName" data-lucide="arrow-up-down" class="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity"></i></div>
+                            </th>
+                            <th class="pb-3 px-4 font-semibold cursor-pointer hover:text-amber-400 transition-colors group" onclick="toggleSort('section')">
+                                <div class="flex items-center gap-1">Section <i id="icon-sort-section" data-lucide="arrow-up-down" class="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity"></i></div>
+                            </th>
+                            <th class="pb-3 px-4 font-semibold cursor-pointer hover:text-amber-400 transition-colors group" onclick="toggleSort('hardcopy')">
+                                <div class="flex items-center gap-1">Hardcopy <i id="icon-sort-hardcopy" data-lucide="arrow-up-down" class="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity"></i></div>
+                            </th>
+                            <th class="pb-3 px-4 font-semibold cursor-pointer hover:text-amber-400 transition-colors group" onclick="toggleSort('paid')">
+                                <div class="flex items-center gap-1">Paid <i id="icon-sort-paid" data-lucide="arrow-up-down" class="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity"></i></div>
+                            </th>
+                            <th class="pb-3 px-4 font-semibold cursor-pointer hover:text-amber-400 transition-colors group" onclick="toggleSort('controlNumber')">
+                                <div class="flex items-center gap-1">Control No. <i id="icon-sort-controlNumber" data-lucide="arrow-up-down" class="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity"></i></div>
+                            </th>
+                            <th class="pb-3 px-4 font-semibold">Picture</th>
+                            <th class="pb-3 px-4 font-semibold text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
-                        {rawData.slice(0, 50).map((row, i) => (
-                        <tr key={i} className="hover:bg-indigo-50/30 transition-colors duration-150">
-                            {row.map((cell, cellIndex) => (
-                            <td key={cellIndex} className="px-6 py-4 whitespace-nowrap max-w-[240px] truncate font-medium" title={cell}>
-                                {cell}
-                            </td>
-                            ))}
-                        </tr>
-                        ))}
+                    <tbody id="recordsTableBody" class="text-sm text-slate-300 divide-y divide-slate-700/50">
+                        <!-- Data injected here -->
                     </tbody>
-                    </table>
-                    {rawData.length === 0 && (
-                    <div className="p-10 text-center text-slate-400 font-medium">No data available</div>
-                    )}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT RECORD MODAL -->
+    <div id="editRecordModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg border-t-4 border-t-indigo-500 overflow-hidden relative">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-lg">Edit Record</h3>
+                <button id="closeEditModalBtn" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="editForm" class="p-6 space-y-4 text-slate-800">
+                <input type="hidden" id="editRowIndex" name="rowIndex">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Last Name</label>
+                        <input type="text" id="editLastName" name="lastName" required class="w-full px-3 py-2 rounded border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">First Name</label>
+                        <input type="text" id="editFirstName" name="firstName" required class="w-full px-3 py-2 rounded border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-slate-50">
+                    </div>
                 </div>
-                </Card>
-            );
 
-            if (configMode) return <ConfigView />;
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Middle Name</label>
+                        <input type="text" id="editMiddleName" name="middleName" class="w-full px-3 py-2 rounded border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Section</label>
+                        <select id="editSection" name="section" required class="w-full px-3 py-2 rounded border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-slate-50">
+                            <option value="" disabled>Select a section</option>
+                            <option value="ABM 1">ABM 1</option>
+                            <option value="ABM 2">ABM 2</option>
+                            <option value="ALS">ALS</option>
+                            <option value="ARTS & DESIGN">ARTS & DESIGN</option>
+                            <option value="HUMSS 1">HUMSS 1</option>
+                            <option value="HUMSS 2">HUMSS 2</option>
+                            <option value="HUMSS 3">HUMSS 3</option>
+                            <option value="HUMSS 4">HUMSS 4</option>
+                            <option value="HUMSS 5">HUMSS 5</option>
+                            <option value="SPORT TRACK">SPORT TRACK</option>
+                            <option value="STEM 1">STEM 1</option>
+                            <option value="STEM 2">STEM 2</option>
+                            <option value="STEM 3">STEM 3</option>
+                            <option value="TVL - ICT">TVL - ICT</option>
+                            <option value="TVL BREAD & PASTRY">TVL BREAD & PASTRY</option>
+                            <option value="TVL EIM">TVL EIM</option>
+                            <option value="TVL FOOD PRO">TVL FOOD PRO</option>
+                        </select>
+                    </div>
+                </div>
 
-            return (
-                <div className="pb-20 font-sans">
-                {/* Glass Header */}
-                <header className="glass sticky top-0 z-50 transition-all duration-300">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl text-white shadow-md shadow-indigo-500/20 transform hover:rotate-6 transition-transform">
-                        <Activity size={22} />
+                <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Hardcopy & Payment</label>
+                        <div class="flex items-center gap-2">
+                            <select id="editHardcopy" name="hardcopy" required class="flex-1 px-3 py-2 rounded border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-slate-50">
+                                <option value="Yes">Yes (+₱100)</option>
+                                <option value="No">No</option>
+                            </select>
+                            <label class="flex items-center gap-1.5 cursor-pointer text-sm font-bold text-emerald-700 border border-emerald-200 bg-emerald-50 px-3 py-2 rounded hover:bg-emerald-100 transition-colors" title="Check if paid">
+                                <input type="checkbox" id="editPaid" name="paid" value="Yes" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                Paid
+                            </label>
                         </div>
-                        <h1 className="font-bold text-xl text-slate-900 hidden sm:block tracking-tight">Picture Taking Package Poll</h1>
                     </div>
-                    
-                    <div className="flex bg-slate-100/80 p-1.5 rounded-xl backdrop-blur-sm">
-                        <button 
-                        onClick={() => setActiveTab('dashboard')}
-                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${activeTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                        >
-                        Dashboard
-                        </button>
-                        <button 
-                        onClick={() => setActiveTab('feed')}
-                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${activeTab === 'feed' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                        >
-                        Data Feed
-                        </button>
+                    <div>
+                        <label class="block text-xs font-bold text-indigo-600 mb-1 uppercase flex items-center justify-between">
+                            <span class="flex items-center gap-1"><i data-lucide="hash" class="w-3 h-3"></i> Control Number</span>
+                            <button type="button" id="suggestControlBtn" class="text-[10px] bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 py-0.5 rounded transition-colors shadow-sm" title="Suggest Next Number">Next: <span id="suggestControlText">--</span></button>
+                        </label>
+                        <input type="text" id="editControlNumber" name="controlNumber" placeholder="Assign control number..." class="w-full px-3 py-2 rounded border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-slate-50 font-mono font-bold text-indigo-700 transition-colors duration-500">
                     </div>
-
-                    <div className="flex items-center gap-4">
-                        <span className="text-xs font-medium text-slate-400 hidden md:block bg-white/50 px-3 py-1 rounded-full">
-                        {loading ? 'Syncing...' : `Updated ${lastUpdated?.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`}
-                        </span>
-                        <button 
-                        onClick={() => setConfigMode(true)}
-                        className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                        title="Settings"
-                        >
-                        <Settings size={22} />
-                        </button>
-                    </div>
-                    </div>
-                </header>
-
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-10">
-                    {activeTab === 'dashboard' ? <DashboardView /> : <FeedView />}
-                </main>
-
-                <footer className="max-w-7xl mx-auto px-6 py-10 text-center text-xs font-medium text-slate-400">
-                    <p>Live Dashboard &bull; Updates every 5s &bull; Secure Connection</p>
-                </footer>
                 </div>
-            );
+
+                <div>
+                    <label class="block text-xs font-bold text-indigo-600 mb-1 uppercase flex items-center gap-1"><i data-lucide="image" class="w-3 h-3"></i> Picture URL</label>
+                    <input type="url" id="editPictureUrl" name="pictureUrl" placeholder="https://example.com/photo.jpg" class="w-full px-3 py-2 rounded border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-slate-50">
+                    <p class="text-[10px] text-slate-400 mt-1">Paste a direct link to an image (Drive, Imgur, etc.)</p>
+                </div>
+
+                <button type="submit" id="saveEditBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded shadow-md transition-all flex justify-center items-center gap-2 mt-2">
+                    <span id="saveBtnText">Save Changes</span>
+                    <i id="saveBtnIcon" data-lucide="save" class="w-4 h-4"></i>
+                    <svg id="saveSpinner" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PASSWORD MODAL -->
+    <div id="passwordModal" class="hidden fixed inset-0 bg-black/80 z-[110] flex items-center justify-center p-4 animate-fade-in">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm border border-slate-700 overflow-hidden relative">
+            <div class="px-6 py-4 bg-slate-900 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-slate-100 flex items-center gap-2"><i data-lucide="lock" class="w-4 h-4 text-amber-400"></i> Admin Access</h3>
+                <button id="closePasswordModalBtn" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="passwordForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Enter Password</label>
+                    <input type="password" id="adminPasswordInput" required placeholder="••••••••" class="w-full px-3 py-2.5 rounded bg-slate-950 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-amber-500 outline-none text-sm transition-colors">
+                    <p id="passwordError" class="text-xs text-red-400 mt-2 hidden flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i> Incorrect password.</p>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2.5 px-4 rounded shadow-md transition-all flex justify-center items-center gap-2">
+                    Unlock Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // ==========================================
+        // DATA FORMATTING UTILITIES
+        // ==========================================
+        function toTitleCase(str) {
+            if (!str) return '';
+            return str.trim().split(/\s+/).map(word => {
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
+        }
+
+        function formatInputs(prefix = '') {
+            // Format Section to UPPERCASE
+            const secId = prefix === 'edit' ? 'editSection' : 'section';
+            const secEl = document.getElementById(secId);
+            if (secEl && secEl.value) secEl.value = secEl.value.trim().toUpperCase();
+
+            // Format Names to Title Case
+            ['lastName', 'firstName', 'middleName'].forEach(field => {
+                const id = prefix === 'edit' ? 'edit' + field.charAt(0).toUpperCase() + field.slice(1) : field;
+                const el = document.getElementById(id);
+                if (el && el.value) el.value = toTitleCase(el.value);
+            });
+        }
+
+        // Auto-format on blur (when user clicks away from an input)
+        ['section', 'lastName', 'firstName', 'middleName'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('blur', () => formatInputs());
+        });
+        
+        ['editSection', 'editLastName', 'editFirstName', 'editMiddleName'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('blur', () => formatInputs('edit'));
+        });
+
+
+        // ==========================================
+        // MAIN FORM SUBMISSION LOGIC
+        // ==========================================
+        const form = document.getElementById('dataForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        
+        const alertMessage = document.getElementById('alertMessage');
+        const alertText = document.getElementById('alertText');
+        const alertIcon = document.getElementById('alertIcon');
+
+        function showAlert(type, message) {
+            alertMessage.classList.remove('hidden', 'bg-red-50', 'text-red-800', 'border-red-200', 'bg-green-50', 'text-green-800', 'border-green-200');
+            alertMessage.classList.add('border');
+            
+            if (type === 'success') {
+                alertMessage.classList.add('bg-green-50', 'text-green-800', 'border-green-200');
+                alertIcon.setAttribute('data-lucide', 'check-circle');
+            } else {
+                alertMessage.classList.add('bg-red-50', 'text-red-800', 'border-red-200');
+                alertIcon.setAttribute('data-lucide', 'alert-circle');
+            }
+            
+            alertText.textContent = message;
+            lucide.createIcons();
+            
+            // Auto hide success message
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertMessage.classList.add('hidden');
+                }, 5000);
+            }
+        }
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            
+            // Enforce proper formatting right before submission
+            formatInputs();
+            
+            // Hardcoded Google Apps Script Web App URL
+            const scriptUrl = 'https://script.google.com/macros/s/AKfycby4niLrNjKNuCdAzkTosGNwN28AKwM7sXULW-uOmH4MIoRj3wQ2xFmxF61_Igb7F2pz0A/exec';
+
+            // UI Loading state
+            submitBtn.disabled = true;
+            btnText.textContent = 'Submitting...';
+            btnIcon.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            alertMessage.classList.add('hidden');
+
+            const formData = new FormData(form);
+            formData.append('action', 'add'); // Added for backend routing
+
+            fetch(scriptUrl, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors' // Used to bypass CORS issues from Google Apps Script redirects
+            })
+            .then(() => {
+                // With 'no-cors' we can't read the exact response, but a resolution implies network success
+                showAlert('success', 'Data submitted successfully!');
+                
+                // Clear the input fields
+                document.getElementById('section').value = '';
+                document.getElementById('lastName').value = '';
+                document.getElementById('firstName').value = '';
+                document.getElementById('middleName').value = '';
+                document.getElementById('hardcopy').value = '';
+            })
+            .catch(error => {
+                showAlert('error', 'Network error or submission failed.');
+                console.error('Error!', error.message);
+            })
+            .finally(() => {
+                // Reset UI
+                submitBtn.disabled = false;
+                btnText.textContent = 'Confirm Details';
+                btnIcon.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+            });
+        });
+
+        // ==========================================
+        // ADMIN DASHBOARD & EDIT LOGIC
+        // ==========================================
+        const toggleAdminBtn = document.getElementById('toggleAdminBtn');
+        const studentFormView = document.getElementById('studentFormView');
+        const adminDashboardView = document.getElementById('adminDashboardView');
+        const recordsTableBody = document.getElementById('recordsTableBody');
+        const refreshDataBtn = document.getElementById('refreshDataBtn');
+        const searchInput = document.getElementById('searchInput');
+        
+        const editRecordModal = document.getElementById('editRecordModal');
+        const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+        const editForm = document.getElementById('editForm');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+        const saveBtnText = document.getElementById('saveBtnText');
+        const saveBtnIcon = document.getElementById('saveBtnIcon');
+        const saveSpinner = document.getElementById('saveSpinner');
+
+        // Password Modal Elements
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordForm = document.getElementById('passwordForm');
+        const adminPasswordInput = document.getElementById('adminPasswordInput');
+        const closePasswordModalBtn = document.getElementById('closePasswordModalBtn');
+        const passwordError = document.getElementById('passwordError');
+
+        let isAdminOpen = false;
+        let recordsData = [];
+        let searchQuery = '';
+        let autoRefreshInterval; // Added variable for auto-refresh timer
+        let sortColumn = null; // null means default sorting
+        let sortAsc = true;
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4niLrNjKNuCdAzkTosGNwN28AKwM7sXULW-uOmH4MIoRj3wQ2xFmxF61_Igb7F2pz0A/exec';
+
+        // Intelligent Control Number Generator
+        function getNextControlNumber() {
+            let maxNum = 0;
+            let prefix = "";
+            let padLength = 0;
+
+            recordsData.forEach(r => {
+                if (r.controlNumber && String(r.controlNumber).trim() !== '') {
+                    // Try to match prefix and number (e.g., "001", "CTRL-105", "A-02")
+                    const match = String(r.controlNumber).trim().match(/^(\D*)(\d+)$/);
+                    if (match) {
+                        const num = parseInt(match[2], 10);
+                        if (num > maxNum) {
+                            maxNum = num;
+                            prefix = match[1];
+                            padLength = match[2].length;
+                        }
+                    } else {
+                        // Fallback if it's just a loose number
+                        const num = parseInt(r.controlNumber, 10);
+                        if (!isNaN(num) && num > maxNum) {
+                            maxNum = num;
+                            prefix = "";
+                            padLength = 0;
+                        }
+                    }
+                }
+            });
+
+            if (maxNum === 0) return "1"; // Default starting number
+
+            const nextNum = maxNum + 1;
+            if (padLength > 0) {
+                return prefix + String(nextNum).padStart(padLength, '0');
+            }
+            return prefix + nextNum;
+        }
+
+        // Toggle Sort Function
+        window.toggleSort = function(column) {
+            if (sortColumn === column) {
+                if (!sortAsc) {
+                    sortColumn = null; // Reset to default sort after descending
+                    sortAsc = true;
+                } else {
+                    sortAsc = false;
+                }
+            } else {
+                sortColumn = column;
+                sortAsc = true;
+            }
+            renderTable();
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // Toggle Admin View Logic
+        toggleAdminBtn.addEventListener('click', () => {
+            if (!isAdminOpen) {
+                // If opening, show the password modal instead of directly opening
+                passwordModal.classList.remove('hidden');
+                adminPasswordInput.value = '';
+                passwordError.classList.add('hidden');
+                setTimeout(() => adminPasswordInput.focus(), 100);
+            } else {
+                // If closing, close normally
+                isAdminOpen = false;
+                studentFormView.classList.remove('hidden');
+                adminDashboardView.classList.add('hidden');
+                toggleAdminBtn.innerHTML = '<i data-lucide="shield" class="w-4 h-4"></i> Admin Panel';
+                lucide.createIcons();
+                clearInterval(autoRefreshInterval); // Stop checking when admin panel is closed
+            }
+        });
+
+        // Close Password Modal
+        closePasswordModalBtn.addEventListener('click', () => {
+            passwordModal.classList.add('hidden');
+        });
+
+        // Handle Password Submission
+        passwordForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (adminPasswordInput.value === 'admin1234') {
+                // Success! Unlock dashboard
+                passwordModal.classList.add('hidden');
+                isAdminOpen = true;
+                
+                studentFormView.classList.add('hidden');
+                adminDashboardView.classList.remove('hidden');
+                toggleAdminBtn.innerHTML = '<i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Form';
+                lucide.createIcons();
+                
+                fetchRecords(); // Fetch data when opening
+                autoRefreshInterval = setInterval(silentFetchRecords, 10000); // Start background sync
+            } else {
+                // Failed
+                passwordError.classList.remove('hidden');
+                adminPasswordInput.classList.add('border-red-500');
+                setTimeout(() => adminPasswordInput.classList.remove('border-red-500'), 2000);
+            }
+        });
+
+        // Fetch Records (Manual/Initial)
+        refreshDataBtn.addEventListener('click', fetchRecords);
+
+        function fetchRecords() {
+            recordsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2"></i> Fetching records...</td></tr>';
+            lucide.createIcons();
+
+            // Perform GET request
+            fetch(SCRIPT_URL + '?action=get')
+                .then(res => {
+                    if (!res.ok) throw new Error("Network response was not ok");
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error("Apps Script Error: " + data.error);
+                    }
+                    recordsData = data;
+                    renderTable();
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    recordsTableBody.innerHTML = `
+                    <tr><td colspan="6" class="p-4">
+                        <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
+                            <i data-lucide="server-crash" class="w-10 h-10 mx-auto mb-3 text-red-400"></i>
+                            <h3 class="text-red-400 font-bold mb-2">Connection Failed (CORS or Deployment Error)</h3>
+                            <p class="text-slate-300 text-sm mb-4">The most common cause for this is that the Google Apps Script has not been correctly updated with the new Admin Dashboard code.</p>
+                            <div class="text-left bg-slate-900 p-4 rounded text-xs text-slate-400 border border-slate-700">
+                                <span class="text-red-300 block font-semibold mb-1">To Fix This:</span>
+                                1. Open the "View Required Apps Script Code" above.<br>
+                                2. Copy the new code and paste it into your Google Apps Script editor.<br>
+                                3. Click <b>Deploy</b> > <b>Manage Deployments</b>.<br>
+                                4. Click the Edit pencil icon, select <b>"New Version"</b>, and click Deploy.
+                            </div>
+                        </div>
+                    </td></tr>`;
+                    lucide.createIcons();
+                });
+        }
+
+        // Silent Fetch (Runs in background without showing loading spinners)
+        function silentFetchRecords() {
+            fetch(SCRIPT_URL + '?action=get')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.error) {
+                        // Only redraw the table if the data actually changed
+                        if (JSON.stringify(recordsData) !== JSON.stringify(data)) {
+                            recordsData = data;
+                            renderTable();
+                        }
+                    }
+                })
+                .catch(err => console.error('Silent fetch failed:', err));
+        }
+
+        // Search Input Listener
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            renderTable();
+        });
+
+        function renderTable() {
+            // Update Stats
+            const total = recordsData.length;
+            const completed = recordsData.filter(r => r.controlNumber && r.controlNumber.toString().trim() !== '').length;
+            const pending = total - completed;
+            
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statCompleted').textContent = completed;
+            document.getElementById('statPending').textContent = pending;
+
+            recordsTableBody.innerHTML = '';
+            if (recordsData.length === 0) {
+                recordsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-500">No records found.</td></tr>';
+                return;
+            }
+
+            // Filter data based on search query
+            let filteredData = recordsData;
+            if (searchQuery) {
+                filteredData = recordsData.filter(r => 
+                    r.lastName.toLowerCase().includes(searchQuery) || 
+                    r.firstName.toLowerCase().includes(searchQuery) ||
+                    r.section.toLowerCase().includes(searchQuery) ||
+                    (r.controlNumber && r.controlNumber.toString().toLowerCase().includes(searchQuery))
+                );
+            }
+
+            if (filteredData.length === 0) {
+                recordsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-500">No matching records found.</td></tr>';
+                return;
+            }
+
+            // Update sort icons visually
+            ['rowIndex', 'lastName', 'section', 'controlNumber', 'hardcopy', 'paid'].forEach(col => {
+                const icon = document.getElementById(`icon-sort-${col}`);
+                if (icon) {
+                    if (sortColumn === col) {
+                        icon.setAttribute('data-lucide', sortAsc ? 'arrow-up' : 'arrow-down');
+                        icon.classList.remove('opacity-30');
+                        icon.classList.add('text-amber-400', 'opacity-100');
+                    } else {
+                        icon.setAttribute('data-lucide', 'arrow-up-down');
+                        icon.classList.add('opacity-30');
+                        icon.classList.remove('text-amber-400', 'opacity-100');
+                    }
+                }
+            });
+
+            // Sort data: Custom column sorting OR Default sorting
+            let sortedData = [...filteredData];
+            
+            if (sortColumn) {
+                sortedData.sort((a, b) => {
+                    // Priority 1: Always put students with NO control number at the top
+                    const aHasCtrl = (a.controlNumber && a.controlNumber.toString().trim() !== '') ? 1 : 0;
+                    const bHasCtrl = (b.controlNumber && b.controlNumber.toString().trim() !== '') ? 1 : 0;
+                    
+                    if (aHasCtrl !== bHasCtrl) {
+                        return aHasCtrl - bHasCtrl; // 0 (empty) comes before 1 (filled)
+                    }
+
+                    // Priority 2: Sort by the selected column
+                    let valA = a[sortColumn];
+                    let valB = b[sortColumn];
+                    
+                    // Specific column handling
+                    if (sortColumn === 'lastName') {
+                        valA = `${a.lastName} ${a.firstName}`.toLowerCase();
+                        valB = `${b.lastName} ${b.firstName}`.toLowerCase();
+                    } else if (typeof valA === 'string') {
+                        valA = valA.toLowerCase();
+                        valB = (valB || '').toString().toLowerCase();
+                    } else if (sortColumn === 'rowIndex') {
+                        valA = parseInt(valA) || 0;
+                        valB = parseInt(valB) || 0;
+                    }
+
+                    if (valA < valB) return sortAsc ? -1 : 1;
+                    if (valA > valB) return sortAsc ? 1 : -1;
+                    return 0;
+                });
+            } else {
+                // Default Sorting: Missing control numbers first, then by most recent (highest rowIndex)
+                sortedData.sort((a, b) => {
+                    const aHasCtrl = (a.controlNumber && a.controlNumber.toString().trim() !== '') ? 1 : 0;
+                    const bHasCtrl = (b.controlNumber && b.controlNumber.toString().trim() !== '') ? 1 : 0;
+                    
+                    if (aHasCtrl !== bHasCtrl) {
+                        return aHasCtrl - bHasCtrl; // Empty control numbers (0) come before filled (1)
+                    }
+                    return b.rowIndex - a.rowIndex; // Sort the remaining items by newest first
+                });
+            }
+
+            sortedData.forEach(record => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-700/30 transition-colors group';
+                
+                // Picture rendering
+                const picHtml = record.pictureUrl 
+                    ? `<a href="${record.pictureUrl}" target="_blank" class="block w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-amber-400 transition-colors"><img src="${record.pictureUrl}" alt="Pic" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSIvPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiLz48L3N2Zz4='"></a>`
+                    : `<div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-slate-500"><i data-lucide="image-off" class="w-4 h-4"></i></div>`;
+
+                // Robust check for Yes
+                const isHardcopy = record.hardcopy && record.hardcopy.toString().trim().toLowerCase() === 'yes';
+                const isPaid = record.paid && record.paid.toString().trim().toLowerCase() === 'yes';
+
+                // Hardcopy Badge rendering
+                const hardcopyBadge = isHardcopy 
+                    ? `<span class="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-emerald-500/30">Yes</span>` 
+                    : `<span class="text-slate-500 text-xs italic">No</span>`;
+
+                // Paid Status Rendering
+                const paidDisplay = isHardcopy
+                    ? (isPaid 
+                        ? `<div class="flex items-center gap-1 text-emerald-400"><i data-lucide="check-square" class="w-4 h-4"></i><span class="text-xs font-bold">Paid</span></div>` 
+                        : `<div class="flex items-center gap-1 text-slate-500"><i data-lucide="square" class="w-4 h-4"></i><span class="text-xs">Unpaid</span></div>`)
+                    : `<span class="text-slate-700">-</span>`;
+
+                // Dim the row slightly if it already has a control number
+                const rowOpacityClass = record.controlNumber ? 'opacity-50 hover:opacity-100' : '';
+                tr.className = `hover:bg-slate-700/30 transition-all group ${rowOpacityClass}`;
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono text-xs text-slate-500">#${record.rowIndex}</td>
+                    <td class="py-3 px-4 font-medium text-slate-200">${record.lastName}, ${record.firstName} ${record.middleName ? record.middleName.charAt(0)+'.' : ''}</td>
+                    <td class="py-3 px-4">${record.section}</td>
+                    <td class="py-3 px-4">${hardcopyBadge}</td>
+                    <td class="py-3 px-4">${paidDisplay}</td>
+                    <td class="py-3 px-4 font-mono text-amber-400 font-semibold">${record.controlNumber || '<span class="text-slate-600 font-normal italic">None</span>'}</td>
+                    <td class="py-3 px-4">${picHtml}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick='openEditModal(${JSON.stringify(record).replace(/'/g, "&#39;")})' class="bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white px-3 py-1.5 rounded text-xs font-semibold transition-all flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 focus:opacity-100">
+                            <i data-lucide="edit-2" class="w-3 h-3"></i> Edit
+                        </button>
+                    </td>
+                `;
+                recordsTableBody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // Edit Modal Logic
+        closeEditModalBtn.addEventListener('click', () => editRecordModal.classList.add('hidden'));
+
+        window.openEditModal = function(record) {
+            document.getElementById('editRowIndex').value = record.rowIndex;
+            document.getElementById('editLastName').value = record.lastName;
+            document.getElementById('editFirstName').value = record.firstName;
+            document.getElementById('editMiddleName').value = record.middleName;
+            document.getElementById('editSection').value = record.section;
+            document.getElementById('editPictureUrl').value = record.pictureUrl;
+            
+            // Intelligent Control Number Suggestion Logic
+            const ctrlInput = document.getElementById('editControlNumber');
+            const suggestControlBtn = document.getElementById('suggestControlBtn');
+            const suggestControlText = document.getElementById('suggestControlText');
+            
+            const nextCtrl = getNextControlNumber();
+            suggestControlText.textContent = nextCtrl;
+            
+            // Auto-fill if empty
+            if (!record.controlNumber || record.controlNumber.toString().trim() === '') {
+                ctrlInput.value = nextCtrl;
+                // Visual cue for auto-fill
+                ctrlInput.classList.remove('bg-slate-50');
+                ctrlInput.classList.add('bg-indigo-100', 'border-indigo-400');
+                setTimeout(() => {
+                    ctrlInput.classList.add('bg-slate-50');
+                    ctrlInput.classList.remove('bg-indigo-100', 'border-indigo-400');
+                }, 800);
+            } else {
+                ctrlInput.value = record.controlNumber;
+            }
+
+            // Click handler for the manual suggest button
+            suggestControlBtn.onclick = () => {
+                ctrlInput.value = nextCtrl;
+                ctrlInput.focus();
+            };
+            
+            // Robust checks
+            const isHardcopy = record.hardcopy && record.hardcopy.toString().trim().toLowerCase() === 'yes';
+            const isPaid = record.paid && record.paid.toString().trim().toLowerCase() === 'yes';
+            
+            document.getElementById('editHardcopy').value = isHardcopy ? 'Yes' : 'No';
+            document.getElementById('editPaid').checked = isPaid;
+            
+            editRecordModal.classList.remove('hidden');
+        };
+
+        editForm.addEventListener('submit', e => {
+            e.preventDefault();
+            
+            // Enforce proper formatting right before editing save
+            formatInputs('edit');
+            
+            saveEditBtn.disabled = true;
+            saveBtnText.textContent = 'Saving...';
+            saveBtnIcon.classList.add('hidden');
+            saveSpinner.classList.remove('hidden');
+
+            const editFormData = new FormData(editForm);
+            editFormData.append('action', 'update');
+            editFormData.set('paid', document.getElementById('editPaid').checked ? 'Yes' : 'No'); // Force value since unchecked boxes aren't submitted by default
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: editFormData,
+                mode: 'no-cors'
+            })
+            .then(() => {
+                editRecordModal.classList.add('hidden');
+                
+                // Optimistic UI Update: Instantly update the local data instead of waiting for a full fetch
+                const rowIndexToUpdate = parseInt(document.getElementById('editRowIndex').value);
+                const recordIndex = recordsData.findIndex(r => r.rowIndex === rowIndexToUpdate);
+                
+                if (recordIndex !== -1) {
+                    recordsData[recordIndex].lastName = document.getElementById('editLastName').value;
+                    recordsData[recordIndex].firstName = document.getElementById('editFirstName').value;
+                    recordsData[recordIndex].middleName = document.getElementById('editMiddleName').value;
+                    recordsData[recordIndex].section = document.getElementById('editSection').value;
+                    recordsData[recordIndex].controlNumber = document.getElementById('editControlNumber').value;
+                    recordsData[recordIndex].pictureUrl = document.getElementById('editPictureUrl').value;
+                    recordsData[recordIndex].hardcopy = document.getElementById('editHardcopy').value;
+                    recordsData[recordIndex].paid = document.getElementById('editPaid').checked ? 'Yes' : 'No';
+                }
+                
+                renderTable(); // Re-render the table immediately
+            })
+            .catch(error => {
+                alert('Failed to update record. Check console.');
+                console.error(error);
+            })
+            .finally(() => {
+                saveEditBtn.disabled = false;
+                saveBtnText.textContent = 'Save Changes';
+                saveBtnIcon.classList.remove('hidden');
+                saveSpinner.classList.add('hidden');
+            });
+        });
     </script>
 </body>
 </html>
